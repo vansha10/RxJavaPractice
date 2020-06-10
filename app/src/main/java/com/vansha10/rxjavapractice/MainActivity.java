@@ -8,6 +8,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.vansha10.rxjavapractice.model.Task;
 
 import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
@@ -27,6 +29,47 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         Observable<Task> taskObservable = Observable
+                .create(new ObservableOnSubscribe<Task>() {
+                    @Override
+                    public void subscribe(ObservableEmitter<Task> emitter) throws Exception {
+                        // Inside the subscribe method iterate through the list of tasks and call onNext(task)
+                        for (Task task : DataSource.createTasksList()) {
+                            if (!emitter.isDisposed()) {
+                                emitter.onNext(task);
+                            }
+                        }
+                        // Once the loop is complete, call the onComplete() method
+                        if (!emitter.isDisposed()) {
+                            emitter.onComplete();
+                        }
+                    }
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+
+        taskObservable.subscribe(new Observer<Task>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+
+            }
+
+            @Override
+            public void onNext(Task task) {
+                Log.d(TAG, "onNext: " + task.getDescription());
+            }
+
+            @Override
+            public void onError(Throwable e) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        });
+
+        /*Observable<Task> taskObservable = Observable
                 .fromIterable(DataSource.createTasksList())
                 .subscribeOn(Schedulers.io())
                 .filter(new Predicate<Task>() {
@@ -34,7 +77,6 @@ public class MainActivity extends AppCompatActivity {
                     public boolean test(Task task) throws Exception {
                         // doing task on background thread doesn't freeze ui
                         Log.d(TAG, "onNext: " + Thread.currentThread().getName());
-                        Thread.sleep(1000);
                         return task.isComplete();
                     }
                 })
@@ -61,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
             public void onComplete() {
                 Log.d(TAG, "onComplete: ");
             }
-        });
+        });*/
 
     }
 
