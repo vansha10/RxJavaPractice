@@ -4,9 +4,11 @@ import android.os.Bundle;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProviders;
 
 import com.vansha10.rxjavapractice.model.Task;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
@@ -18,6 +20,7 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
+import okhttp3.ResponseBody;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -30,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        fromArrayOperator();
+        fromPublisherOperator();
     }
 
     private void createOperator() {
@@ -208,6 +211,24 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onComplete() {
                 Log.d(TAG, "onComplete: ");
+            }
+        });
+    }
+
+    private void fromPublisherOperator() {
+        // https://codingwithmitch.com/courses/rxjava-rxandroid-for-beginners/rx-operators-from-publisher/
+
+        MainViewModel viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
+
+        viewModel.makeQuery().observe(this, new androidx.lifecycle.Observer<ResponseBody>() {
+            @Override
+            public void onChanged(ResponseBody responseBody) {
+                Log.d(TAG, "onChanged: this is a live data response!");
+                try {
+                    Log.d(TAG, "onChanged: " + responseBody.string());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
