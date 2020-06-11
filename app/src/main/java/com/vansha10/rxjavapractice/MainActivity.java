@@ -30,45 +30,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        timerOperator();
-    }
-
-    private void observables() {
-        Observable<Task> taskObservable = Observable
-                .fromIterable(DataSource.createTasksList())
-                .subscribeOn(Schedulers.io())
-                .filter(new Predicate<Task>() {
-                    @Override
-                    public boolean test(Task task) throws Exception {
-                        // doing task on background thread doesn't freeze ui
-                        Log.d(TAG, "onNext: " + Thread.currentThread().getName());
-                        return task.isComplete();
-                    }
-                })
-                .observeOn(AndroidSchedulers.mainThread());
-
-        taskObservable.subscribe(new Observer<Task>() {
-            @Override
-            public void onSubscribe(Disposable d) {
-                Log.d(TAG, "onSubscribe: ");
-                disposables.add(d);
-            }
-
-            @Override
-            public void onNext(Task task) {
-                Log.d(TAG, "onNext: " + task.getDescription());
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                Log.e(TAG, "onError: ", e);
-            }
-
-            @Override
-            public void onComplete() {
-                Log.d(TAG, "onComplete: ");
-            }
-        });
+        fromArrayOperator();
     }
 
     private void createOperator() {
@@ -174,6 +136,78 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onComplete() {
 
+            }
+        });
+    }
+
+    private void fromArrayOperator() {
+        Task[] tasks = new Task[3];
+        tasks[0] = new Task("Task 1", false, 1);
+        tasks[1] = new Task("Task 2", false, 2);
+        tasks[2] = new Task("Task 3", false, 3);
+        Observable<Task> taskObservable = Observable
+                .fromArray(tasks)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+
+        taskObservable.subscribe(new Observer<Task>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+                Log.d(TAG, "onSubscribe: ");
+                disposables.add(d);
+            }
+
+            @Override
+            public void onNext(Task task) {
+                Log.d(TAG, "onNext: " + task.getDescription());
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Log.e(TAG, "onError: ", e);
+            }
+
+            @Override
+            public void onComplete() {
+                Log.d(TAG, "onComplete: ");
+            }
+        });
+    }
+
+    private void fromIterableOperator() {
+        Observable<Task> taskObservable = Observable
+                .fromIterable(DataSource.createTasksList())
+                .subscribeOn(Schedulers.io())
+                .filter(new Predicate<Task>() {
+                    @Override
+                    public boolean test(Task task) throws Exception {
+                        // doing task on background thread doesn't freeze ui
+                        Log.d(TAG, "onNext: " + Thread.currentThread().getName());
+                        return task.isComplete();
+                    }
+                })
+                .observeOn(AndroidSchedulers.mainThread());
+
+        taskObservable.subscribe(new Observer<Task>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+                Log.d(TAG, "onSubscribe: ");
+                disposables.add(d);
+            }
+
+            @Override
+            public void onNext(Task task) {
+                Log.d(TAG, "onNext: " + task.getDescription());
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Log.e(TAG, "onError: ", e);
+            }
+
+            @Override
+            public void onComplete() {
+                Log.d(TAG, "onComplete: ");
             }
         });
     }
