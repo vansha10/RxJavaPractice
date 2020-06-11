@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.vansha10.rxjavapractice.model.Task;
 
+import java.util.concurrent.TimeUnit;
+
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
@@ -28,48 +30,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        timerOperator();
+    }
+
+    private void observables() {
         Observable<Task> taskObservable = Observable
-                .create(new ObservableOnSubscribe<Task>() {
-                    @Override
-                    public void subscribe(ObservableEmitter<Task> emitter) throws Exception {
-                        // Inside the subscribe method iterate through the list of tasks and call onNext(task)
-                        for (Task task : DataSource.createTasksList()) {
-                            if (!emitter.isDisposed()) {
-                                emitter.onNext(task);
-                            }
-                        }
-                        // Once the loop is complete, call the onComplete() method
-                        if (!emitter.isDisposed()) {
-                            emitter.onComplete();
-                        }
-                    }
-                })
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
-
-        taskObservable.subscribe(new Observer<Task>() {
-            @Override
-            public void onSubscribe(Disposable d) {
-
-            }
-
-            @Override
-            public void onNext(Task task) {
-                Log.d(TAG, "onNext: " + task.getDescription());
-            }
-
-            @Override
-            public void onError(Throwable e) {
-
-            }
-
-            @Override
-            public void onComplete() {
-
-            }
-        });
-
-        /*Observable<Task> taskObservable = Observable
                 .fromIterable(DataSource.createTasksList())
                 .subscribeOn(Schedulers.io())
                 .filter(new Predicate<Task>() {
@@ -103,13 +68,120 @@ public class MainActivity extends AppCompatActivity {
             public void onComplete() {
                 Log.d(TAG, "onComplete: ");
             }
-        });*/
+        });
+    }
 
+    private void createOperator() {
+        Observable<Task> taskObservable = Observable
+                .create(new ObservableOnSubscribe<Task>() {
+                    @Override
+                    public void subscribe(ObservableEmitter<Task> emitter) throws Exception {
+                        // Inside the subscribe method iterate through the list of tasks and call onNext(task)
+                        for (Task task : DataSource.createTasksList()) {
+                            if (!emitter.isDisposed()) {
+                                emitter.onNext(task);
+                            }
+                        }
+                        // Once the loop is complete, call the onComplete() method
+                        if (!emitter.isDisposed()) {
+                            emitter.onComplete();
+                        }
+                    }
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+
+        taskObservable.subscribe(new Observer<Task>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+                disposables.add(d);
+            }
+
+            @Override
+            public void onNext(Task task) {
+                Log.d(TAG, "onNext: " + task.getDescription());
+            }
+
+            @Override
+            public void onError(Throwable e) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        });
+    }
+
+    private void intervalOperator() {
+        Observable<Long> longObservable = Observable
+                .interval(1, TimeUnit.SECONDS)
+                .takeWhile(new Predicate<Long>() {
+                    @Override
+                    public boolean test(Long aLong) throws Exception {
+                        // repeat till 5 seconds have passed
+                        return aLong <= 5;
+                    }
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+
+        longObservable.subscribe(new Observer<Long>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+                disposables.add(d);
+            }
+
+            @Override
+            public void onNext(Long aLong) {
+                Log.d(TAG, "onNext: " + aLong);
+            }
+
+            @Override
+            public void onError(Throwable e) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        });
+    }
+
+    private void timerOperator() {
+        Observable<Long> longObservable = Observable
+                .timer(5, TimeUnit.SECONDS)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+        longObservable.subscribe(new Observer<Long>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+                disposables.add(d);
+            }
+
+            @Override
+            public void onNext(Long aLong) {
+                Log.d(TAG, "onNext: " + aLong);
+            }
+
+            @Override
+            public void onError(Throwable e) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        });
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        // clears all disposables which means rx observers are not observed
         disposables.clear();
     }
 }
