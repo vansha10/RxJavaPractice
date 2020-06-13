@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        distinctOperator();
+        takeWhileOperator();
     }
 
     private void createOperator() {
@@ -278,6 +278,43 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public String apply(Task task) throws Exception {
                         return task.getDescription(); // the field to test for uniqueness
+                    }
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+
+        taskObservable.subscribe(new Observer<Task>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+                disposables.add(d);
+            }
+
+            @Override
+            public void onNext(Task task) {
+                Log.d(TAG, "onNext: " + task.getDescription());
+            }
+
+            @Override
+            public void onError(Throwable e) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        });
+    }
+
+    private void takeWhileOperator() {
+        // equivalent of a while loop
+
+        Observable<Task> taskObservable = Observable
+                .fromIterable(DataSource.createTasksList())
+                .takeWhile(new Predicate<Task>() {
+                    @Override
+                    public boolean test(Task task) throws Exception {
+                        return task.isComplete();
                     }
                 })
                 .subscribeOn(Schedulers.io())
