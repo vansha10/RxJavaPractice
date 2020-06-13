@@ -6,9 +6,11 @@ import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProviders;
 
+import com.jakewharton.rxbinding3.view.RxView;
 import com.vansha10.rxjavapractice.model.Task;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
@@ -21,6 +23,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Function;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
+import kotlin.Unit;
 import okhttp3.ResponseBody;
 
 public class MainActivity extends AppCompatActivity {
@@ -34,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mapOperator();
+        bufferOperatorUseCase();
     }
 
     private void createOperator() {
@@ -376,6 +379,81 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    private void bufferOperator() {
+        // simple example
+
+        // emits 2 objects at a time
+        Observable<List<Task>> taskObservable = Observable
+                .fromIterable(DataSource.createTasksList())
+                .buffer(2)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+
+        taskObservable.subscribe(new Observer<List<Task>>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+                disposables.add(d);
+            }
+
+            @Override
+            public void onNext(List<Task> tasks) {
+                Log.d(TAG, "onNext: Next Batch of tasks............................");
+                for (Task task : tasks) {
+                    Log.d(TAG, "onNext: " + task.getDescription());
+                }
+            }
+
+            @Override
+            public void onError(Throwable e) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        });
+    }
+
+    private void bufferOperatorUseCase() {
+        // use case for tracking ui interactions, counts number of clicks in 4 seconds
+        // https://codingwithmitch.com/courses/rxjava-rxandroid-for-beginners/rxjava-operators-buffer/
+
+        // rx binding library converts view clicks to observables
+        RxView.clicks(findViewById(R.id.button))
+                .map(new Function<Unit, Integer>() {
+                    @Override
+                    public Integer apply(Unit unit) throws Exception {
+                        return 1;
+                    }
+                })
+                .buffer(4, TimeUnit.SECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<List<Integer>>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        disposables.add(d);
+                    }
+
+                    @Override
+                    public void onNext(List<Integer> integers) {
+                        Log.d(TAG, "onNext: You clicked the button " + integers.size() + " times!");
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
+
+
     }
 
     @Override
