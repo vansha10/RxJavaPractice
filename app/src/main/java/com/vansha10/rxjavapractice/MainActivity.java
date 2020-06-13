@@ -18,6 +18,7 @@ import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Function;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 import okhttp3.ResponseBody;
@@ -33,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        filterOperator();
+        distinctOperator();
     }
 
     private void createOperator() {
@@ -248,7 +249,44 @@ public class MainActivity extends AppCompatActivity {
         taskObservable.subscribe(new Observer<Task>() {
             @Override
             public void onSubscribe(Disposable d) {
+                disposables.add(d);
+            }
 
+            @Override
+            public void onNext(Task task) {
+                Log.d(TAG, "onNext: " + task.getDescription());
+            }
+
+            @Override
+            public void onError(Throwable e) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        });
+    }
+
+    private void distinctOperator() {
+        // returns list of unique objects
+
+        Observable<Task> taskObservable = Observable
+                .fromIterable(DataSource.createDuplicateTasksList())
+                .distinct(new Function<Task, String>() {
+                    @Override
+                    public String apply(Task task) throws Exception {
+                        return task.getDescription(); // the field to test for uniqueness
+                    }
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+
+        taskObservable.subscribe(new Observer<Task>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+                disposables.add(d);
             }
 
             @Override
